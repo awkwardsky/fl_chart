@@ -1536,13 +1536,33 @@ class LineChartPainter extends AxisChartPainter<LineChartData> {
 
       // find the nearest spot on touch area in this bar line
       final foundTouchedSpot =
-          getNearestTouchedSpot(size, localPosition, barData, i, holder);
+          _getNearestTouchedSpot(size, localPosition, barData, i, holder);
       if (foundTouchedSpot != null) {
         touchedSpots.add(foundTouchedSpot);
       }
     }
 
     return touchedSpots.isEmpty ? null : touchedSpots;
+  }
+
+  ///issue: The better way to fixed: tooltip is too slow when series has large number of points.
+  ///https://github.com/imaNNeoFighT/fl_chart/issues/707
+  ///Solution:
+  LineBarSpot? _getNearestTouchedSpot(Size viewSize, Offset touchedPoint, LineChartBarData barData,
+      int barDataPosition, PaintHolder<LineChartData> holder) {
+    final data = holder.data;
+    if (!barData.show || barData.spots.isEmpty) {
+      return null;
+    }
+    final chartViewSize = getChartUsableDrawSize(viewSize, holder);
+    final spotCount = barData.spots.length;
+    final idxTemp = (touchedPoint.dx / chartViewSize.width * spotCount).round();
+    final idx = max(0, min(spotCount - 1, idxTemp));
+    final spot = barData.spots[idx];
+    if (spot != null) {
+      return LineBarSpot(barData, barDataPosition, spot);
+    }
+    return null;
   }
 
   /// find the nearest spot base on the touched offset
